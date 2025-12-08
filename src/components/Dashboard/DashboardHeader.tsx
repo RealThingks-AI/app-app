@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { User, Settings, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
-import logo from "@/assets/appmaster-logo.png";
 
 export const DashboardHeader = () => {
   const { organisation } = useOrganisation();
@@ -21,7 +20,7 @@ export const DashboardHeader = () => {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            <img src={logo} alt="AppMaster" className="h-8 w-auto" />
+            <span className="text-xl font-bold text-primary">RT Apps</span>
           </Link>
           {organisation && (
             <>

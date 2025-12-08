@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import logo from "@/assets/appmaster-logo.png";
 import { useState, useEffect } from "react";
 
 const Navbar = () => {
@@ -34,7 +33,7 @@ const Navbar = () => {
     }`}>
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <img src={logo} alt="AppMaster" className="h-8 w-auto" />
+          <span className="text-xl font-bold text-primary">RT Apps</span>
         </Link>
 
         <nav className="flex items-center gap-6">

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Quote } from "lucide-react";
 const Testimonials = () => {
   const testimonials = [{
-    quote: "AppMaster has transformed how we manage our business. The integration between all tools is seamless.",
+    quote: "RT Apps has transformed how we manage our business. The integration between all tools is seamless.",
     author: "Sarah Johnson",
     role: "CEO, TechStart Inc",
     company: "TechStart"

@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import logo from "@/assets/appmaster-logo.png";
 
 const Login = () => {
   const [isSignup, setIsSignup] = useState(false);
@@ -121,9 +120,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-accent/10 to-background p-4">
       <Card className="w-full max-w-md p-6 animate-fade-in">
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center mb-3">
-            <img src={logo} alt="AppMaster" className="h-12 w-auto" />
-          </div>
+          <h1 className="text-2xl font-bold text-primary mb-1">RT Apps</h1>
           <p className="text-sm text-muted-foreground">Manage your business in one place</p>
         </div>
 

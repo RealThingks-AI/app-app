@@ -358,7 +358,7 @@ const AppDetailPage = () => {
               Ready to Get Started?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of businesses already using AppMaster to streamline their operations
+              Join thousands of businesses already using RT Apps to streamline their operations
             </p>
             <Button 
               size="lg" 

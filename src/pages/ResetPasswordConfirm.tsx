@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
-import logo from "@/assets/appmaster-logo.png";
 
 const ResetPasswordConfirm = () => {
   const [password, setPassword] = useState("");
@@ -91,7 +90,7 @@ const ResetPasswordConfirm = () => {
         <Card className="w-full max-w-md p-6">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center mb-3">
-              <img src={logo} alt="AppMaster" className="h-14 w-auto" />
+              <span className="text-2xl font-bold text-primary">RT Apps</span>
             </div>
             <h1 className="text-2xl font-bold mb-2">Set New Password</h1>
             <p className="text-sm text-muted-foreground">
