@@ -1,4 +1,4 @@
-project_id = "awuamriycpisutbfuxid"
+project_id = "swoaatojjhcxnzbhosii"
 
 [functions.get-admin-dashboard]
 verify_jwt = true
