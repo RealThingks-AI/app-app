@@ -7,6 +7,7 @@ import { MoreHorizontal, Search, Plus, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { OrganizationDetailsModal } from "./OrganizationDetailsModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,11 +44,18 @@ export const OrganisationsTable = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showEditPlanDialog, setShowEditPlanDialog] = useState(false);
-  const [showUsersDialog, setShowUsersDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([]);
-  const [orgUsers, setOrgUsers] = useState<any[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [newOrgData, setNewOrgData] = useState({
+    name: "",
+    domain: "",
+    billing_email: "",
+    plan_id: "",
+    account_type: "organization"
+  });
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [orgDetailsModalOpen, setOrgDetailsModalOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -255,42 +263,75 @@ export const OrganisationsTable = () => {
     }
   };
 
-  const handleManageUsers = async (org: any) => {
-    setSelectedOrg(org);
-    setShowUsersDialog(true);
-    setLoadingUsers(true);
-    
+  const handleManageUsers = (org: any) => {
+    navigate(`/super-admin/organization-users?orgId=${org.id}`);
+  };
+
+  const handleOrgClick = (orgId: string) => {
+    setSelectedOrgId(orgId);
+    setOrgDetailsModalOpen(true);
+  };
+
+  const handleCreateOrganisation = async () => {
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select(`
-          *,
-          organisations!users_organisation_id_fkey (
-            name,
-            account_type
-          )
-        `)
-        .eq("organisation_id", org.id)
-        .neq("user_type", "appmaster_admin")
-        .order("created_at", { ascending: false });
+      if (!newOrgData.name.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Organisation name is required",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      if (error) throw error;
+      // Create the organisation
+      const { data: orgData, error: orgError } = await supabase
+        .from("organisations")
+        .insert({
+          name: newOrgData.name,
+          domain: newOrgData.domain || null,
+          billing_email: newOrgData.billing_email || null,
+          plan_id: newOrgData.plan_id || null,
+          account_type: "organization",
+          plan: subscriptionPlans.find(p => p.id === newOrgData.plan_id)?.plan_name || "free"
+        })
+        .select()
+        .single();
 
-      const transformedUsers = (data || []).map(user => ({
-        ...user,
-        organisation_name: user.organisations?.name || "No Organisation",
-        account_type: user.organisations?.account_type || "organization",
-      }));
+      if (orgError) throw orgError;
 
-      setOrgUsers(transformedUsers);
+      // Create subscription if plan is selected
+      if (newOrgData.plan_id && orgData) {
+        const selectedPlanData = subscriptionPlans.find(p => p.id === newOrgData.plan_id);
+        await supabase
+          .from("subscriptions")
+          .insert({
+            organisation_id: orgData.id,
+            plan_id: newOrgData.plan_id,
+            plan_name: selectedPlanData?.plan_name || "free",
+            status: "active",
+          });
+      }
+
+      toast({
+        title: "Success",
+        description: `Organisation "${newOrgData.name}" has been created`,
+      });
+
+      setShowCreateDialog(false);
+      setNewOrgData({
+        name: "",
+        domain: "",
+        billing_email: "",
+        plan_id: "",
+        account_type: "organization"
+      });
+      fetchOrganisations();
     } catch (error: any) {
       toast({
-        title: "Error loading users",
+        title: "Error creating organisation",
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setLoadingUsers(false);
     }
   };
 
@@ -311,10 +352,7 @@ export const OrganisationsTable = () => {
             Refresh
           </Button>
           <Button 
-            onClick={() => toast({
-              title: "Create Organisation",
-              description: "Organisation creation feature coming soon",
-            })} 
+            onClick={() => setShowCreateDialog(true)} 
             size="sm"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -361,7 +399,14 @@ export const OrganisationsTable = () => {
             ) : (
               filteredOrgs.map((org) => (
                 <TableRow key={org.id}>
-                  <TableCell className="font-medium">{org.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <button
+                      onClick={() => handleOrgClick(org.id)}
+                      className="text-primary hover:underline cursor-pointer text-left"
+                    >
+                      {org.name}
+                    </button>
+                  </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">
                       {org.domain || "—"}
@@ -535,7 +580,7 @@ export const OrganisationsTable = () => {
                 <SelectContent>
                   {subscriptionPlans.map((plan) => (
                     <SelectItem key={plan.id} value={plan.id}>
-                      {plan.display_name} - ${plan.monthly_price}/mo
+                      {plan.display_name} - ₹{plan.monthly_price}/mo
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -553,74 +598,93 @@ export const OrganisationsTable = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Users Dialog */}
-      <Dialog open={showUsersDialog} onOpenChange={setShowUsersDialog}>
-        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+      {/* Create Organisation Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Manage Users - {selectedOrg?.name}</DialogTitle>
+            <DialogTitle>Create New Organisation</DialogTitle>
             <DialogDescription>
-              View and manage all users in this organisation
+              Add a new organisation to the system
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            {loadingUsers ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Loading users...
-              </div>
-            ) : orgUsers.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No users found in this organisation
-              </div>
-            ) : (
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Last Login</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orgUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name || "—"}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={user.user_type === "individual" ? "secondary" : "outline"}
-                            className="capitalize"
-                          >
-                            {user.user_type || "organization"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{user.role || "user"}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.status === "active" ? "default" : "destructive"}>
-                            {user.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {user.last_login ? new Date(user.last_login).toLocaleDateString() : "Never"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="org-name">Organisation Name *</Label>
+              <Input
+                id="org-name"
+                placeholder="Enter organisation name"
+                value={newOrgData.name}
+                onChange={(e) => setNewOrgData({ ...newOrgData, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-domain">Domain</Label>
+              <Input
+                id="org-domain"
+                placeholder="example.com"
+                value={newOrgData.domain}
+                onChange={(e) => setNewOrgData({ ...newOrgData, domain: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-billing-email">Billing Email</Label>
+              <Input
+                id="org-billing-email"
+                type="email"
+                placeholder="billing@example.com"
+                value={newOrgData.billing_email}
+                onChange={(e) => setNewOrgData({ ...newOrgData, billing_email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-plan">Subscription Plan</Label>
+              <Select
+                value={newOrgData.plan_id}
+                onValueChange={(value) => setNewOrgData({ ...newOrgData, plan_id: value })}
+              >
+                <SelectTrigger id="org-plan">
+                  <SelectValue placeholder="Select a plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subscriptionPlans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>
+                      {plan.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateDialog(false);
+                setNewOrgData({
+                  name: "",
+                  domain: "",
+                  billing_email: "",
+                  plan_id: "",
+                  account_type: "organization"
+                });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleCreateOrganisation}>
+              Create Organisation
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Organization Details Modal */}
+      <OrganizationDetailsModal
+        organizationId={selectedOrgId}
+        open={orgDetailsModalOpen}
+        onOpenChange={setOrgDetailsModalOpen}
+        onRefresh={fetchOrganisations}
+      />
     </div>
   );
 };

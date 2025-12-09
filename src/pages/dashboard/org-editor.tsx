@@ -2,37 +2,57 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOrganisation } from "@/contexts/OrganisationContext";
 import { Navigate } from "react-router-dom";
 import { DashboardHeader } from "@/components/Dashboard/DashboardHeader";
-import { StatsCard } from "@/components/Dashboard/StatsCard";
 import { ToolCard } from "@/components/Dashboard/ToolCard";
-import { 
-  Users, Ticket, Package, TrendingUp, 
-  Calendar, FileText, ShoppingBag, Mail,
-  DollarSign, BarChart3, Clock, Briefcase
-} from "lucide-react";
+import { Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { TOOL_ICONS } from "@/lib/icons";
 
 const OrgEditorDashboard = () => {
   const { user, accountType, userRole, loading } = useAuth();
   const { organisation } = useOrganisation();
 
-  const { data: stats } = useQuery({
-    queryKey: ["org-editor-stats"],
+  // Fetch user's assigned tools
+  const { data: userAssignedTools = [], isLoading: isLoadingTools } = useQuery({
+    queryKey: ["user-assigned-tools", user?.id, organisation?.id],
     queryFn: async () => {
-      const [leadsCount, ticketsCount, inventoryCount] = await Promise.all([
-        supabase.from("crm_leads").select("*", { count: "exact", head: true }),
-        supabase.from("crm_contacts").select("*", { count: "exact", head: true }),
-        supabase.from("inventory_items").select("*", { count: "exact", head: true }),
-      ]);
-
-      return {
-        leads: leadsCount.count || 0,
-        tickets: ticketsCount.count || 0,
-        inventory: inventoryCount.count || 0,
-      };
+      if (!user?.id || !organisation?.id) return [];
+      
+      // Get the user's internal ID
+      const { data: userData } = await supabase
+        .from("users")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .single();
+      
+      if (!userData) return [];
+      
+      // Get user's assigned tools with tool details
+      const { data: userTools, error } = await supabase
+        .from("user_tools")
+        .select(`
+          tool_id,
+          tool:tools!inner (
+            id,
+            key,
+            name,
+            description,
+            active
+          )
+        `)
+        .eq("user_id", userData.id)
+        .eq("tools.active", true);  // Use table name 'tools', not alias 'tool'
+      
+      if (error) {
+        console.error("Error fetching user tools:", error);
+        return [];
+      }
+      
+      return userTools?.map(ut => ut.tool).filter(Boolean) || [];
     },
-    enabled: !!user,
+    enabled: !!user && !!organisation?.id,
   });
+
 
   if (loading) {
     return (
@@ -49,69 +69,82 @@ const OrgEditorDashboard = () => {
 
   const activeTools = organisation?.active_tools || [];
   
-  const allTools = [
-    { key: "crm", name: "CRM", icon: Users, path: "/crm", color: "text-blue-500" },
-    { key: "tickets", name: "Tickets", icon: Ticket, path: "/tickets", color: "text-orange-500" },
-    { key: "inventory", name: "Inventory", icon: Package, path: "/inventory", color: "text-green-500" },
-    { key: "attendance", name: "Attendance", icon: Calendar, path: "/attendance", color: "text-purple-500" },
-    { key: "invoicing", name: "Invoicing", icon: FileText, path: "/invoicing", color: "text-yellow-500" },
-    { key: "subscriptions", name: "Subscriptions", icon: TrendingUp, path: "/subscriptions", color: "text-pink-500" },
-    { key: "assets", name: "Assets", icon: Briefcase, path: "/assets", color: "text-indigo-500" },
-    { key: "depreciation", name: "Depreciation", icon: BarChart3, path: "/depreciation", color: "text-red-500" },
-    { key: "shop", name: "Shop Income/Expense", icon: ShoppingBag, path: "/shop-income-expense", color: "text-teal-500" },
-    { key: "marketing", name: "Marketing", icon: Mail, path: "/marketing", color: "text-cyan-500" },
-    { key: "recruitment", name: "Recruitment", icon: Clock, path: "/recruitment", color: "text-violet-500" },
-  ];
+  // Filter tools: show only tools that are BOTH active in org AND assigned to user
+  const availableTools = userAssignedTools
+    .filter(tool => activeTools.includes(tool.key))
+    .map(tool => {
+      const toolConfig = TOOL_ICONS[tool.key];
+      return {
+        key: tool.key,
+        name: tool.name,
+        icon: toolConfig?.icon || Package,
+        path: toolConfig?.path || `/${tool.key}`,
+        color: toolConfig?.gradient || "from-gray-500 to-gray-600",
+      };
+    });
 
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">{organisation?.name}</h1>
-          <p className="text-muted-foreground">Editor Dashboard - Operational Tools</p>
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Header Section */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
+            {organisation?.name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {role === 'employee' ? 'Welcome back! Here are your daily tools' : 'Operational Dashboard'}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatsCard
-            title="Total Leads"
-            value={stats?.leads || 0}
-            icon={Users}
-            color="from-blue-500 to-blue-600"
-          />
-          <StatsCard
-            title="Total Contacts"
-            value={stats?.tickets || 0}
-            icon={Ticket}
-            color="from-orange-500 to-orange-600"
-          />
-          <StatsCard
-            title="Inventory Items"
-            value={stats?.inventory || 0}
-            icon={Package}
-            color="from-green-500 to-green-600"
-          />
-        </div>
+        {/* Tools Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                {role === 'employee' ? 'Your Tools' : 'Available Tools'}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {availableTools.length > 0 
+                  ? `${availableTools.length} tool${availableTools.length !== 1 ? 's' : ''} available`
+                  : 'No tools assigned yet'}
+              </p>
+            </div>
+          </div>
 
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Tools</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {allTools.map((tool) => {
-              const isActive = activeTools.includes(tool.key);
-              return (
+          {isLoadingTools ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="flex flex-col items-center gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+                <p className="text-sm text-muted-foreground">Loading your tools...</p>
+              </div>
+            </div>
+          ) : availableTools.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Package className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-base font-semibold mb-1">No Tools Assigned</h3>
+              <p className="text-sm text-muted-foreground text-center max-w-md">
+                Contact your organization admin to get access to tools and start working.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {availableTools.map((tool) => (
                 <ToolCard
                   key={tool.key}
                   name={tool.name}
                   icon={tool.icon}
                   path={tool.path}
                   color={tool.color}
-                  isActive={isActive}
-                  isLocked={!isActive}
+                  isActive={true}
+                  isLocked={false}
                 />
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

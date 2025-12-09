@@ -25,26 +25,26 @@ export const ToolCard = ({
 }: ToolCardProps) => {
   if (isLocked) {
     return (
-      <Card className="relative p-6 hover:shadow-lg transition-all group cursor-not-allowed opacity-60">
+      <Card className="relative p-6 hover:shadow-md transition-all duration-[var(--transition-base)] cursor-not-allowed opacity-60">
         <div className="absolute top-4 right-4">
-          <Lock className="w-5 h-5 text-muted-foreground" />
+          <Lock className="w-4 h-4 text-muted-foreground" />
         </div>
         <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-4`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
-        <h3 className="font-semibold text-lg mb-2">{name}</h3>
-        <Badge variant="secondary">Upgrade to unlock</Badge>
+        <h3 className="font-semibold text-base mb-2">{name}</h3>
+        <Badge variant="secondary" className="text-xs">Upgrade to unlock</Badge>
       </Card>
     );
   }
 
   if (!isActive) {
     return (
-      <Card className="relative p-6 hover:shadow-lg transition-all group">
+      <Card className="relative p-6 hover:shadow-md transition-all duration-[var(--transition-base)] group">
         <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-4`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
-        <h3 className="font-semibold text-lg mb-2">{name}</h3>
+        <h3 className="font-semibold text-base mb-2">{name}</h3>
         <Button onClick={onActivate} size="sm" variant="outline" className="w-full">
           Activate Tool
         </Button>
@@ -53,13 +53,18 @@ export const ToolCard = ({
   }
 
   return (
-    <Link to={path}>
-      <Card className="relative p-6 hover:shadow-lg transition-all hover:scale-105 group cursor-pointer">
-        <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-          <Icon className="w-6 h-6 text-white" />
+    <Link to={path} className="group">
+      <Card className="relative p-6 overflow-hidden hover:shadow-md hover:border-primary/20 transition-all duration-[var(--transition-base)] cursor-pointer active:scale-[0.98]">
+        <div className="relative">
+          <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${color} flex items-center justify-center mb-4 shadow-sm group-hover:shadow-md transition-all duration-[var(--transition-base)]`}>
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="font-semibold text-base mb-1 group-hover:text-primary transition-colors duration-[var(--transition-fast)]">{name}</h3>
+          <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors duration-[var(--transition-fast)] flex items-center gap-1">
+            Click to open
+            <span className="inline-block group-hover:translate-x-0.5 transition-transform duration-[var(--transition-fast)]">→</span>
+          </p>
         </div>
-        <h3 className="font-semibold text-lg mb-2">{name}</h3>
-        <p className="text-sm text-muted-foreground">Click to open</p>
       </Card>
     </Link>
   );

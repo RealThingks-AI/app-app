@@ -214,9 +214,6 @@ export const AddPaymentDialog = ({ open, onOpenChange, onSuccess, editingPayment
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="INR">INR (₹)</SelectItem>
-                        <SelectItem value="USD">USD ($)</SelectItem>
-                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                        <SelectItem value="GBP">GBP (£)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -17,23 +17,23 @@ const OrgViewerDashboard = () => {
   const { organisation } = useOrganisation();
 
   const { data: stats } = useQuery({
-    queryKey: ["org-viewer-stats"],
+    queryKey: ["org-viewer-stats", organisation?.id],
     queryFn: async () => {
-      const [leadsCount, ticketsCount, inventoryCount, usersCount] = await Promise.all([
-        supabase.from("crm_leads").select("*", { count: "exact", head: true }),
-        supabase.from("crm_contacts").select("*", { count: "exact", head: true }),
-        supabase.from("inventory_items").select("*", { count: "exact", head: true }),
-        supabase.from("users").select("*", { count: "exact", head: true }).eq("status", "active"),
+      if (!organisation?.id) return { leads: 0, tickets: 0, users: 0 };
+      
+      const [leadsCount, ticketsCount, usersCount] = await Promise.all([
+        supabase.from("crm_leads").select("*", { count: "exact", head: true }).eq("organisation_id", organisation.id),
+        supabase.from("tickets").select("*", { count: "exact", head: true }).eq("organisation_id", organisation.id),
+        supabase.from("users").select("*", { count: "exact", head: true }).eq("organisation_id", organisation.id).eq("status", "active"),
       ]);
 
       return {
         leads: leadsCount.count || 0,
         tickets: ticketsCount.count || 0,
-        inventory: inventoryCount.count || 0,
         users: usersCount.count || 0,
       };
     },
-    enabled: !!user,
+    enabled: !!user && !!organisation?.id,
   });
 
   if (loading) {
@@ -53,10 +53,10 @@ const OrgViewerDashboard = () => {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-4 py-4 space-y-4">
         <div>
-          <h1 className="text-3xl font-bold">{organisation?.name}</h1>
-          <p className="text-muted-foreground">Viewer Dashboard - Read-Only Access</p>
+          <h1 className="text-2xl font-bold">{organisation?.name}</h1>
+          <p className="text-sm text-muted-foreground">Viewer Dashboard - Read-Only Access</p>
         </div>
 
         <Alert>
@@ -80,16 +80,10 @@ const OrgViewerDashboard = () => {
             color="from-green-500 to-green-600"
           />
           <StatsCard
-            title="Total Contacts"
+            title="Support Tickets"
             value={stats?.tickets || 0}
             icon={Ticket}
             color="from-orange-500 to-orange-600"
-          />
-          <StatsCard
-            title="Inventory Items"
-            value={stats?.inventory || 0}
-            icon={Package}
-            color="from-purple-500 to-purple-600"
           />
         </div>
 

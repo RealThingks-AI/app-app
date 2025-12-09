@@ -35,29 +35,6 @@ const appDetails = {
       "Team collaboration tools"
     ]
   },
-  inventory: {
-    icon: Package,
-    title: "Inventory Management",
-    slug: "inventory",
-    tagline: "Real-Time Stock Control Across All Locations",
-    description: "Keep perfect track of your inventory with real-time updates, automated alerts, and multi-warehouse management. Never run out of stock or overstock again.",
-    color: "from-orange-500 to-orange-600",
-    toolPath: "/inventory",
-    features: [
-      "Multi-warehouse tracking",
-      "Real-time stock updates",
-      "Low stock alerts",
-      "Barcode scanning",
-      "Inventory forecasting",
-      "Supplier management"
-    ],
-    benefits: [
-      "Reduce stockouts by 85%",
-      "Optimize inventory levels",
-      "Track items across locations",
-      "Automated reorder points"
-    ]
-  },
   invoicing: {
     icon: FileText,
     title: "Invoicing & Billing",
@@ -104,14 +81,14 @@ const appDetails = {
       "Employee satisfaction"
     ]
   },
-  tickets: {
+  helpdesk: {
     icon: Ticket,
-    title: "Help Desk",
-    slug: "tickets",
+    title: "HelpDesk",
+    slug: "helpdesk",
     tagline: "Deliver Exceptional Customer Support",
     description: "Organize and resolve customer issues efficiently with our ticketing system. Track, prioritize, and manage support requests from a unified dashboard.",
     color: "from-cyan-500 to-cyan-600",
-    toolPath: "/tickets",
+    toolPath: "/helpdesk",
     features: [
       "Multi-channel support",
       "Ticket prioritization",
@@ -171,29 +148,6 @@ const appDetails = {
       "Expense control",
       "Financial insights",
       "Tax preparation"
-    ]
-  },
-  recruitment: {
-    icon: Calendar,
-    title: "Recruitment",
-    slug: "recruitment",
-    tagline: "Hire Top Talent Faster",
-    description: "Streamline your hiring process from job posting to onboarding. Manage applications, schedule interviews, and find the best candidates efficiently.",
-    color: "from-red-500 to-red-600",
-    toolPath: "/recruitment",
-    features: [
-      "Job posting management",
-      "Applicant tracking",
-      "Interview scheduling",
-      "Candidate evaluation",
-      "Offer management",
-      "Onboarding workflow"
-    ],
-    benefits: [
-      "Reduce time-to-hire by 50%",
-      "Better candidate experience",
-      "Collaborative hiring",
-      "Data-driven decisions"
     ]
   },
   subscriptions: {
@@ -358,7 +312,7 @@ const AppDetailPage = () => {
               Ready to Get Started?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of businesses already using RT Apps to streamline their operations
+              Join thousands of businesses already using AppMaster to streamline their operations
             </p>
             <Button 
               size="lg" 

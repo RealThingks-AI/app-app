@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
+import logo from "@/assets/appmaster-logo.png";
 
 const Footer = () => {
   const footerSections = [
     {
       title: "Products",
-      links: ["CRM", "Inventory", "Invoicing", "HR", "Help Desk", "Assets"],
+      links: ["CRM", "Inventory", "Invoicing", "HR", "Help Desk"],
     },
     {
       title: "Company",
@@ -27,7 +28,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <span className="text-xl font-bold text-primary">RT Apps</span>
+              <img src={logo} alt="AppMaster" className="h-8 w-auto" />
             </Link>
             <p className="text-muted-foreground text-sm mb-4">
               Powerful business management software designed for modern teams.
@@ -74,7 +75,7 @@ const Footer = () => {
         <div className="border-t border-border pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} RT Apps. All rights reserved.
+              © {new Date().getFullYear()} AppMaster. All rights reserved.
             </p>
             <div className="flex gap-6">
               <Link to="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">

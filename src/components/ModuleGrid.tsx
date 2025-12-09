@@ -1,18 +1,11 @@
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { 
-  TrendingDown, 
   FileText, 
   Clock, 
-  Users, 
   Ticket, 
-  CreditCard,
-  Package,
-  ShoppingCart,
   BarChart3,
-  UserCircle,
-  Mail,
-  PackageSearch
+  Mail
 } from "lucide-react";
 
 const modules = [
@@ -20,7 +13,6 @@ const modules = [
     category: "Finance", 
     color: "from-blue-500 to-cyan-500",
     items: [
-      { name: "Depreciation", icon: TrendingDown, path: "/depreciation" },
       { name: "Invoicing", icon: FileText, path: "/invoicing" }
     ]
   },
@@ -28,31 +20,14 @@ const modules = [
     category: "HR", 
     color: "from-purple-500 to-pink-500",
     items: [
-      { name: "Attendance", icon: Clock, path: "/attendance" },
-      { name: "Recruitment", icon: Users, path: "/recruitment" }
+      { name: "Attendance", icon: Clock, path: "/attendance" }
     ]
   },
   { 
     category: "IT", 
     color: "from-cyan-500 to-blue-500",
     items: [
-      { name: "Tickets Handling", icon: Ticket, path: "/tickets" },
-      { name: "Subscriptions", icon: CreditCard, path: "/subscriptions" },
-      { name: "Assets", icon: Package, path: "/assets" }
-    ]
-  },
-  { 
-    category: "Shop", 
-    color: "from-emerald-500 to-teal-500",
-    items: [
-      { name: "Income & Expenditure Tracker", icon: ShoppingCart, path: "/shop-income-expense" }
-    ]
-  },
-  { 
-    category: "Manufacturing", 
-    color: "from-orange-500 to-red-500",
-    items: [
-      { name: "Inventory", icon: PackageSearch, path: "/inventory" }
+      { name: "HelpDesk", icon: Ticket, path: "/helpdesk" }
     ]
   },
   { 
@@ -60,20 +35,6 @@ const modules = [
     color: "from-indigo-500 to-purple-500",
     items: [
       { name: "CRM", icon: BarChart3, path: "/crm" }
-    ]
-  },
-  { 
-    category: "Marketing", 
-    color: "from-pink-500 to-rose-500",
-    items: [
-      { name: "Marketing", icon: BarChart3, path: "/marketing" }
-    ]
-  },
-  { 
-    category: "Productivity", 
-    color: "from-violet-500 to-purple-500",
-    items: [
-      { name: "Personal Expense Tracker", icon: UserCircle, path: "/personal-expense" }
     ]
   },
   { 
