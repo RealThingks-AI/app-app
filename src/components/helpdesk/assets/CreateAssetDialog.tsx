@@ -19,6 +19,7 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    type: "hardware",
     category: "",
     brand: "",
     model: "",
@@ -59,13 +60,14 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
       const { error } = await supabase.from("itam_assets").insert({
         asset_tag: assetTag,
         name: formData.name,
-        category: formData.category,
-        brand: formData.brand,
-        model: formData.model,
-        serial_number: formData.serial_number,
+        type: formData.type,
+        category: formData.category || null,
+        brand: formData.brand || null,
+        model: formData.model || null,
+        serial_number: formData.serial_number || null,
         status: formData.status,
         cost: formData.cost ? parseFloat(formData.cost) : null,
-        notes: formData.notes,
+        description: formData.notes || null,
         tenant_id: tenantId,
         organisation_id: orgId,
         created_by: user.id
@@ -79,6 +81,7 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
       onOpenChange(false);
       setFormData({
         name: "",
+        type: "hardware",
         category: "",
         brand: "",
         model: "",
@@ -114,6 +117,25 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="type">Type *</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => setFormData({ ...formData, type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hardware">Hardware</SelectItem>
+                  <SelectItem value="software">Software</SelectItem>
+                  <SelectItem value="peripheral">Peripheral</SelectItem>
+                  <SelectItem value="furniture">Furniture</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
               <Input
                 id="category"
@@ -122,24 +144,24 @@ export const CreateAssetDialog = ({ open, onOpenChange }: CreateAssetDialogProps
                 placeholder="e.g., Laptop"
               />
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="assigned">Assigned</SelectItem>
-                  <SelectItem value="in_repair">In Repair</SelectItem>
-                  <SelectItem value="retired">Retired</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="available">Available</SelectItem>
+                <SelectItem value="assigned">Assigned</SelectItem>
+                <SelectItem value="in_repair">In Repair</SelectItem>
+                <SelectItem value="retired">Retired</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
