@@ -107,7 +107,7 @@ const Login = () => {
         title: "Success",
         description: "Logged in successfully!"
       });
-      navigate("/");
+      navigate("/helpdesk");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -199,7 +199,7 @@ const Login = () => {
           {/* Greeting */}
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-foreground">
-              {isSignup ? "Create your AppMaster account" : "Sign in to continue to AppMaster"}
+              {isSignup ? "Create your RT-App account" : "Sign in to RT-App"}
             </h1>
           </div>
 

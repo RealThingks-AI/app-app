@@ -8,8 +8,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { OrganisationProvider } from "./contexts/OrganisationContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { SuperAdminRoute } from "./components/SuperAdminRoute";
-import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
+
 // Helpdesk imports
 import HelpdeskLayout from "./pages/helpdesk/layout";
 import HelpdeskDashboard from "./pages/helpdesk/dashboard";
@@ -27,7 +27,6 @@ import LicensesList from "./pages/helpdesk/assets/licenses/index";
 import RepairsList from "./pages/helpdesk/assets/repairs/index";
 import CreateRepair from "./pages/helpdesk/assets/repairs/create";
 import RepairDetail from "./pages/helpdesk/assets/repairs/detail/[repairId]";
-// Assets Explore imports
 import AssetsBulkActions from "./pages/helpdesk/assets/explore/bulk-actions";
 import AssetsReports from "./pages/helpdesk/assets/explore/reports";
 import AssetsTools from "./pages/helpdesk/assets/tools";
@@ -52,8 +51,8 @@ import SystemUpdatesSettings from "./pages/helpdesk/system-updates/settings";
 import SystemUpdatesDevices from "./pages/helpdesk/system-updates/devices";
 import SystemUpdatesUpdates from "./pages/helpdesk/system-updates/updates";
 import HelpdeskAudit from "./pages/helpdesk/audit";
-import Contact from "./pages/contact";
-import ReportIssue from "./pages/ReportIssue";
+
+// Auth & Profile
 import Login from "./pages/Login";
 import AuthConfirm from "./pages/AuthConfirm";
 import Profile from "./pages/Profile";
@@ -61,6 +60,9 @@ import InitializeAdmin from "./pages/InitializeAdmin";
 import PasswordReset from "./pages/PasswordReset";
 import ResetPasswordConfirm from "./pages/ResetPasswordConfirm";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import Notifications from "./pages/Notifications";
+
+// Super Admin
 import SuperAdmin from "./pages/super-admin/index";
 import SuperAdminDashboard from "./pages/super-admin/dashboard";
 import SuperAdminOrganisations from "./pages/super-admin/organisations";
@@ -79,7 +81,6 @@ import SuperAdminBroadcasts from "./pages/super-admin/broadcasts";
 import SuperAdminOrganizationUsers from "./pages/super-admin/organization-users";
 import SuperAdminTools from "./pages/super-admin/tools";
 import { BroadcastBanner } from "./components/BroadcastBanner";
-import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,11 +102,11 @@ const App = () => {
             <OrganisationProvider>
               <BroadcastBanner />
               <Routes>
-                <Route path="/" element={<Landing />} />
-                
-                {/* Main dashboard redirect to Helpdesk */}
+                {/* Root redirects to helpdesk */}
+                <Route path="/" element={<Navigate to="/helpdesk" replace />} />
                 <Route path="/dashboard" element={<Navigate to="/helpdesk" replace />} />
                 
+                {/* Auth Routes */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/auth/confirm" element={<AuthConfirm />} />
                 <Route path="/password-reset" element={<PasswordReset />} />
@@ -116,8 +117,9 @@ const App = () => {
                 <Route path="/profile/security" element={<Navigate to="/profile#security" replace />} />
                 <Route path="/profile/payments" element={<Navigate to="/profile#payments" replace />} />
                 <Route path="/initialize-admin" element={<InitializeAdmin />} />
+                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 
-                {/* Helpdesk Routes - All under /helpdesk */}
+                {/* Helpdesk Routes */}
                 <Route path="/helpdesk" element={<ProtectedRoute><HelpdeskLayout /></ProtectedRoute>}>
                   <Route index element={<HelpdeskDashboard />} />
                   <Route path="tickets" element={<HelpdeskTickets />} />
@@ -160,10 +162,7 @@ const App = () => {
                   <Route path="sla" element={<HelpdeskSLA />} />
                 </Route>
                 
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/report-issue" element={<ReportIssue />} />
-                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-                
+                {/* Super Admin Routes */}
                 <Route path="/super-admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>}>
                   <Route index element={<SuperAdminDashboard />} />
                   <Route path="organisations" element={<SuperAdminOrganisations />} />
@@ -183,7 +182,6 @@ const App = () => {
                   <Route path="settings" element={<SuperAdminSettings />} />
                 </Route>
                 
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </OrganisationProvider>
