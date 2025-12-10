@@ -1,7 +1,2 @@
-import { LicensesList } from "@/components/Subscriptions/LicensesList";
-
-const HelpdeskSubscriptionLicenses = () => {
-  return <LicensesList />;
-};
-
+const HelpdeskSubscriptionLicenses = () => <div className="p-4 text-muted-foreground">Licenses management - coming soon</div>;
 export default HelpdeskSubscriptionLicenses;

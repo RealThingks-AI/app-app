@@ -1,7 +1,2 @@
-import { VendorsList } from "@/components/Subscriptions/VendorsList";
-
-const HelpdeskSubscriptionVendors = () => {
-  return <VendorsList />;
-};
-
+const HelpdeskSubscriptionVendors = () => <div className="p-4 text-muted-foreground">Vendors management - coming soon</div>;
 export default HelpdeskSubscriptionVendors;

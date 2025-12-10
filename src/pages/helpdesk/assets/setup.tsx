@@ -1,4 +1,4 @@
-import { AssetTopBar } from "@/components/ITAM/AssetTopBar";
+import { AssetTopBar } from "@/components/helpdesk/assets/AssetTopBar";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings, TrendingDown, Building2, FileKey, ShoppingCart, Wrench, FileText } from "lucide-react";

@@ -6,7 +6,7 @@ export const useITAMStats = () => {
     queryKey: ["itam-stats"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return null;
 
       const { data: userData } = await supabase
         .from("users")
@@ -23,58 +23,40 @@ export const useITAMStats = () => {
       const tenantId = profileData?.tenant_id || 1;
       const orgId = userData?.organisation_id;
 
-      // Get total assets count
-      let assetsQuery = supabase
-        .from("assets")
-        .select("*", { count: "exact", head: false });
-
+      let query = supabase.from("itam_assets").select("*").eq("is_deleted", false);
+      
       if (orgId) {
-        assetsQuery = assetsQuery.eq("organisation_id", orgId);
+        query = query.eq("organisation_id", orgId);
       } else {
-        assetsQuery = assetsQuery.eq("tenant_id", tenantId);
+        query = query.eq("tenant_id", tenantId);
       }
 
-      const { data: assets, count: totalAssets } = await assetsQuery;
+      const { data: assets } = await query;
 
-      // Count by type
-      const laptops = assets?.filter(a => 
-        a.asset_type?.toLowerCase().includes('laptop')
-      ).length || 0;
+      const totalAssets = assets?.length || 0;
+      const laptops = assets?.filter(a => a.category?.toLowerCase().includes('laptop')).length || 0;
+      const assigned = assets?.filter(a => a.status === 'assigned' || a.status === 'checked_out').length || 0;
+      const available = assets?.filter(a => a.status === 'available').length || 0;
+      const inRepair = assets?.filter(a => a.status === 'in_repair').length || 0;
 
-      // Get assigned assets count
-      let assignmentsQuery = supabase
-        .from("asset_assignments")
-        .select("*", { count: "exact" })
-        .is("returned_at", null);
-
-      if (orgId) {
-        assignmentsQuery = assignmentsQuery.eq("organisation_id", orgId);
-      } else {
-        assignmentsQuery = assignmentsQuery.eq("tenant_id", tenantId);
-      }
-
-      const { count: assignedCount } = await assignmentsQuery;
-
-      // Get active licenses count
-      let licensesQuery = supabase
-        .from("asset_licenses")
-        .select("*", { count: "exact" })
-        .eq("status", "active");
-
+      // Get licenses count
+      let licensesQuery = supabase.from("asset_licenses").select("id");
       if (orgId) {
         licensesQuery = licensesQuery.eq("organisation_id", orgId);
       } else {
         licensesQuery = licensesQuery.eq("tenant_id", tenantId);
       }
-
-      const { count: licensesCount } = await licensesQuery;
+      const { data: licensesData } = await licensesQuery;
+      const licenses = licensesData?.length || 0;
 
       return {
-        totalAssets: totalAssets || 0,
+        totalAssets,
         laptops,
-        assigned: assignedCount || 0,
-        licenses: licensesCount || 0,
+        assigned,
+        available,
+        inRepair,
+        licenses
       };
-    },
+    }
   });
 };

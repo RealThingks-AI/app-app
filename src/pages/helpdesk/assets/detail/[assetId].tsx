@@ -19,7 +19,7 @@ import { LinkingTab } from "./[assetId]/tabs/LinkingTab";
 import { MaintenanceTab } from "./[assetId]/tabs/MaintenanceTab";
 import { ContractsTab } from "./[assetId]/tabs/ContractsTab";
 import { AuditTab } from "./[assetId]/tabs/AuditTab";
-import { EditAssetDialog } from "@/components/ITAM/EditAssetDialog";
+import { EditAssetDialog } from "@/components/helpdesk/assets/EditAssetDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const AssetDetail = () => {

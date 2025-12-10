@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Search, Plus, UserCheck, Wrench, Settings, Package, ChevronDown } from "lucide-react";
-import { AssetsList } from "@/components/ITAM/AssetsList";
-import { CreateAssetDialog } from "@/components/ITAM/CreateAssetDialog";
-import { AssetTopBar } from "@/components/ITAM/AssetTopBar";
+import { AssetsList } from "@/components/helpdesk/assets/AssetsList";
+import { CreateAssetDialog } from "@/components/helpdesk/assets/CreateAssetDialog";
+import { AssetTopBar } from "@/components/helpdesk/assets/AssetTopBar";
 import { useAssetSetupConfig } from "@/hooks/useAssetSetupConfig";
 export default function AllAssets() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

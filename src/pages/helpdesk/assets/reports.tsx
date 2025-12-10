@@ -1,4 +1,4 @@
-import { AssetTopBar } from "@/components/ITAM/AssetTopBar";
+import { AssetTopBar } from "@/components/helpdesk/assets/AssetTopBar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Package, Calendar, ClipboardCheck, AlertTriangle, Activity, ShieldCheck, BarChart3 } from "lucide-react";
