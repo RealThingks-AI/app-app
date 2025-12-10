@@ -3,10 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useAssetReports = () => {
   return useQuery({
-    queryKey: ["asset-reports"],
+    queryKey: ["asset-reports-data"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return null;
 
       const { data: userData } = await supabase
         .from("users")
@@ -23,7 +23,7 @@ export const useAssetReports = () => {
       const tenantId = profileData?.tenant_id || 1;
       const orgId = userData?.organisation_id;
 
-      // Fetch all assets
+      // Fetch assets
       let assetsQuery = supabase.from("assets").select("*");
       if (orgId) {
         assetsQuery = assetsQuery.eq("organisation_id", orgId);
@@ -33,9 +33,7 @@ export const useAssetReports = () => {
       const { data: assets } = await assetsQuery;
 
       // Fetch assignments
-      let assignmentsQuery = supabase
-        .from("asset_assignments")
-        .select("*, assets(name)");
+      let assignmentsQuery = supabase.from("asset_assignments").select("*, assets(name)");
       if (orgId) {
         assignmentsQuery = assignmentsQuery.eq("organisation_id", orgId);
       } else {
@@ -43,11 +41,15 @@ export const useAssetReports = () => {
       }
       const { data: assignments } = await assignmentsQuery;
 
-      // Fetch maintenance records
-      let maintenanceQuery = supabase
-        .from("asset_maintenance")
-        .select("*");
-      const { data: maintenance } = await maintenanceQuery;
+      // Fetch warranties
+      let warrantiesQuery = supabase.from("asset_warranties").select("*");
+      warrantiesQuery = warrantiesQuery.eq("tenant_id", tenantId);
+      const { data: warranties } = await warrantiesQuery;
+
+      // Fetch depreciation entries
+      let depreciationQuery = supabase.from("depreciation_entries").select("*");
+      depreciationQuery = depreciationQuery.eq("tenant_id", tenantId);
+      const { data: depreciation } = await depreciationQuery;
 
       // Fetch licenses
       let licensesQuery = supabase.from("asset_licenses").select("*");
@@ -58,25 +60,19 @@ export const useAssetReports = () => {
       }
       const { data: licenses } = await licensesQuery;
 
-      // Fetch warranties
-      const { data: warranties } = await supabase
-        .from("asset_warranties")
-        .select("*");
-
-      // Fetch depreciation entries
-      const { data: depreciation } = await supabase
-        .from("depreciation_entries")
-        .select("*")
-        .eq("posted", true);
+      // Fetch maintenance
+      let maintenanceQuery = supabase.from("asset_maintenance").select("*");
+      maintenanceQuery = maintenanceQuery.eq("tenant_id", tenantId);
+      const { data: maintenance } = await maintenanceQuery;
 
       return {
         assets: assets || [],
         assignments: assignments || [],
-        maintenance: maintenance || [],
-        licenses: licenses || [],
         warranties: warranties || [],
         depreciation: depreciation || [],
+        licenses: licenses || [],
+        maintenance: maintenance || []
       };
-    },
+    }
   });
 };

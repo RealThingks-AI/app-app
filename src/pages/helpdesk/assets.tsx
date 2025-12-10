@@ -1,10 +1,10 @@
-import { AssetTopBar } from "@/components/ITAM/AssetTopBar";
+import { AssetTopBar } from "@/components/helpdesk/assets/AssetTopBar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, Plus, List, Clock, TrendingDown, DollarSign, AlertCircle, Wrench, CheckCircle } from "lucide-react";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CreateAssetDialog } from "@/components/ITAM/CreateAssetDialog";
+import { CreateAssetDialog } from "@/components/helpdesk/assets/CreateAssetDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
