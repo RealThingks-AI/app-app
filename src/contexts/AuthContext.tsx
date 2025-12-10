@@ -11,7 +11,6 @@ interface AuthContextType {
   userRole: string | null;
   userType: 'individual' | 'organization' | 'appmaster_admin' | null;
   appmasterRole: string | null;
-  orgRole: 'super_admin' | 'org_admin' | 'org_user' | 'individual_user' | null;
   signOut: () => Promise<void>;
 }
 
@@ -25,7 +24,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userType, setUserType] = useState<'individual' | 'organization' | 'appmaster_admin' | null>(null);
   const [appmasterRole, setAppmasterRole] = useState<string | null>(null);
-  const [orgRole, setOrgRole] = useState<'super_admin' | 'org_admin' | 'org_user' | 'individual_user' | null>(null);
   const navigate = useNavigate();
 
   const fetchUserMetadata = async (userId: string) => {
@@ -38,18 +36,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (userData) {
         setUserType(userData.user_type || null);
-        
-        // Fetch org-level role from user_org_map
-        if (userData?.organisation_id) {
-          const { data: orgMapData } = await supabase
-            .from("user_org_map")
-            .select("role")
-            .eq("user_id", userId)
-            .eq("organisation_id", userData.organisation_id)
-            .single();
-          
-          setOrgRole((orgMapData?.role as 'super_admin' | 'org_admin' | 'org_user' | 'individual_user') || null);
-        }
         
         // Check if appmaster admin
         if (userData.user_type === 'appmaster_admin') {
@@ -80,7 +66,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Get initial session first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserMetadata(session.user.id);
+          }, 0);
+        } else {
+          setAccountType(null);
+          setUserRole(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -92,61 +95,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    // Then set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state change:', event);
-        
-        // Only update state for specific events to prevent unnecessary resets
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            setTimeout(() => {
-              fetchUserMetadata(session.user.id);
-            }, 0);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
-          setAccountType(null);
-          setUserRole(null);
-          setUserType(null);
-          setAppmasterRole(null);
-          setOrgRole(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
     return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error signing out:", error);
-      // Clear local storage even if server call fails
-      localStorage.clear();
-      // Clear state immediately
-      setUser(null);
-      setSession(null);
-      setAccountType(null);
-      setUserRole(null);
-      setUserType(null);
-      setAppmasterRole(null);
-      setOrgRole(null);
-    } finally {
-      navigate("/");
-    }
+    await supabase.auth.signOut();
+    navigate("/");
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, accountType, userRole, userType, appmasterRole, orgRole, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, accountType, userRole, userType, appmasterRole, signOut }}>
       {children}
     </AuthContext.Provider>
   );

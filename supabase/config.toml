@@ -1,7 +1,4 @@
-project_id = "awuamriycpisutbfuxid"
-
-[functions.ingest-device-updates]
-verify_jwt = false
+project_id = "swoaatojjhcxnzbhosii"
 
 [functions.get-admin-dashboard]
 verify_jwt = true
@@ -28,13 +25,4 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.forgot-password]
-verify_jwt = false
-
-[functions.get-next-asset-id-by-category]
-verify_jwt = true
-
-[functions.reserve-next-asset-id]
-verify_jwt = true
-
-[functions.check-user-exists]
 verify_jwt = false

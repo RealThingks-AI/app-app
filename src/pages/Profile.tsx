@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,111 +9,68 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { ProfileSidebar } from "@/components/Profile/ProfileSidebar";
-import { ProfileCard } from "@/components/Profile/ProfileCard";
-import Navbar from "@/components/Navbar";
-import { Loader2, Mail, Shield, Lock, Key, Smartphone, Activity, Eye, Settings, AlertCircle, CheckCircle2 } from "lucide-react";
-import PersonalInfo from "./profile/PersonalInfo";
-import Security from "./profile/Security";
-import Payments from "./profile/Payments";
+import {
+  ArrowLeft,
+  Calendar,
+  Loader2,
+  Mail,
+  Phone,
+  Shield,
+  User,
+  Save,
+  LockKeyhole,
+  Building2,
+} from "lucide-react";
+
 const Profile = () => {
-  const {
-    user,
-    userType
-  } = useAuth();
-  const {
-    organisation
-  } = useOrganisation();
-  const {
-    toast
-  } = useToast();
+  const { user, userType } = useAuth();
+  const { organisation } = useOrganisation();
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const isAppmasterAdmin = userType === "appmaster_admin";
+
   const [isEditing, setIsEditing] = useState(false);
-  const [activeSection, setActiveSection] = useState("home");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    phone: ""
+    phone: "",
   });
-  const mainRef = useRef<HTMLElement>(null);
 
-  // Intersection Observer for tracking active section
-  useEffect(() => {
-    if (!mainRef.current) return;
-
-    const observerOptions = {
-      root: mainRef.current,
-      rootMargin: "-20% 0px -60% 0px",
-      threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-    };
-
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      // Find the section with the highest intersection ratio
-      const visibleSections = entries
-        .filter(entry => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-      
-      if (visibleSections.length > 0) {
-        setActiveSection(visibleSections[0].target.id);
-      }
-    };
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-    
-    const sections = ["home", "personal-info", "security", "payments"];
-    sections.forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) observer.observe(element);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  // Handle hash navigation on load
-  useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.replace("#", "");
-      const element = document.getElementById(id);
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      }
-    }
-  }, [location.hash]);
   const {
     data: userData,
     isLoading,
-    isFetching
+    isFetching,
   } = useQuery({
     queryKey: ["user-profile", user?.id],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("users").select("*").eq("auth_user_id", user?.id).maybeSingle();
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("auth_user_id", user?.id)
+        .maybeSingle();
+
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
   });
-  const {
-    data: profile
-  } = useQuery({
+
+  const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("profiles").select("*").eq("id", user?.id).maybeSingle();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user?.id)
+        .maybeSingle();
+
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
   });
 
   // Keep local form state in sync with latest server data
@@ -123,57 +80,64 @@ const Profile = () => {
         setFormData({
           name: userData.name || "",
           email: userData.email || "",
-          phone: userData.phone || ""
+          phone: userData.phone || "",
         });
       } else if (user) {
         setFormData({
           name: (user.user_metadata as any)?.name || user.email || "",
           email: user.email || "",
-          phone: (user.user_metadata as any)?.phone || ""
+          phone: (user.user_metadata as any)?.phone || "",
         });
       }
     }
   }, [userData, isEditing, user]);
+
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: {
-      name: string;
-      phone: string;
-    }) => {
+    mutationFn: async (data: { name: string; phone: string }) => {
       // Special handling for Appmaster admins: store profile info in auth metadata
       if (isAppmasterAdmin) {
-        const {
-          data: authResult,
-          error: authError
-        } = await supabase.auth.updateUser({
+        const { data: authResult, error: authError } = await supabase.auth.updateUser({
           data: {
             name: data.name,
-            phone: data.phone
-          }
+            phone: data.phone,
+          },
         });
+
         if (authError) throw authError;
 
         // Best-effort sync phone to saas_users (ignore errors)
         if (user?.id) {
-          await supabase.from("saas_users").update({
-            phone: data.phone
-          }).eq("auth_user_id", user.id);
+          await supabase
+            .from("saas_users")
+            .update({ phone: data.phone })
+            .eq("auth_user_id", user.id);
         }
+
         const updatedUser = authResult?.user ?? user;
+
         return {
-          name: (updatedUser?.user_metadata as any)?.name as string || updatedUser?.email || data.name,
-          phone: (updatedUser?.user_metadata as any)?.phone as string || data.phone,
-          email: updatedUser?.email || ""
+          name:
+            ((updatedUser?.user_metadata as any)?.name as string) ||
+            updatedUser?.email ||
+            data.name,
+          phone:
+            ((updatedUser?.user_metadata as any)?.phone as string) ||
+            data.phone,
+          email: updatedUser?.email || "",
         };
       }
 
       // For regular users, update the users table
-      const {
-        data: updated,
-        error: updateError
-      } = await supabase.from("users").update({
-        name: data.name,
-        phone: data.phone
-      }).eq("auth_user_id", user?.id).select("id, name, phone, email").maybeSingle();
+      const { data: updated, error: updateError } = await supabase
+        .from("users")
+        .update({
+          name: data.name,
+          phone: data.phone,
+        })
+        .eq("auth_user_id", user?.id)
+        .select("id, name, phone, email")
+        .maybeSingle();
+
       if (updateError) throw updateError;
 
       // If no existing row, create one using organisation context if available
@@ -182,60 +146,73 @@ const Profile = () => {
 
         // If no organisation (e.g. AppMaster admins), fall back to auth profile only
         if (!orgId) {
-          const {
-            data: authResult,
-            error: authError
-          } = await supabase.auth.updateUser({
+          const { data: authResult, error: authError } = await supabase.auth.updateUser({
             data: {
               name: data.name,
-              phone: data.phone
-            }
+              phone: data.phone,
+            },
           });
+
           if (authError) throw authError;
+
           if (user?.id) {
-            await supabase.from("saas_users").update({
-              phone: data.phone
-            }).eq("auth_user_id", user.id);
+            await supabase
+              .from("saas_users")
+              .update({ phone: data.phone })
+              .eq("auth_user_id", user.id);
           }
+
           const updatedUser = authResult?.user ?? user;
+
           return {
-            name: (updatedUser?.user_metadata as any)?.name as string || updatedUser?.email || data.name,
-            phone: (updatedUser?.user_metadata as any)?.phone as string || data.phone,
-            email: updatedUser?.email || ""
+            name:
+              ((updatedUser?.user_metadata as any)?.name as string) ||
+              updatedUser?.email ||
+              data.name,
+            phone:
+              ((updatedUser?.user_metadata as any)?.phone as string) ||
+              data.phone,
+            email: updatedUser?.email || "",
           };
         }
-        const {
-          data: inserted,
-          error: insertError
-        } = await supabase.from("users").insert({
-          auth_user_id: user?.id,
-          email: user?.email || data.name,
-          // fallback
-          name: data.name,
-          phone: data.phone,
-          organisation_id: orgId,
-          status: "active",
-          role: "member"
-        }).select("id, name, phone, email").single();
+
+        const { data: inserted, error: insertError } = await supabase
+          .from("users")
+          .insert({
+            auth_user_id: user?.id,
+            email: user?.email || data.name, // fallback
+            name: data.name,
+            phone: data.phone,
+            organisation_id: orgId,
+            status: "active",
+            role: "member",
+          })
+          .select("id, name, phone, email")
+          .single();
+
         if (insertError) throw insertError;
         return inserted;
       }
+
       return updated;
     },
-    onSuccess: async result => {
+    onSuccess: async (result) => {
       // Optimistically sync cache so UI updates instantly
-      queryClient.setQueryData(["user-profile", user?.id], (prev: any) => ({
+      queryClient.setQueryData([
+        "user-profile",
+        user?.id,
+      ], (prev: any) => ({
         ...(prev || {}),
         name: result.name,
         phone: result.phone,
-        email: result.email
+        email: result.email,
       }));
-      await queryClient.invalidateQueries({
-        queryKey: ["user-profile", user?.id]
-      });
+
+      await queryClient.invalidateQueries({ queryKey: ["user-profile", user?.id] });
+
       toast({
         title: "Profile updated",
-        description: "Your changes have been saved."
+        description: "Your changes have been saved.",
       });
       setIsEditing(false);
     },
@@ -243,139 +220,286 @@ const Profile = () => {
       toast({
         title: "Update failed",
         description: error.message || "Failed to update profile",
-        variant: "destructive"
+        variant: "destructive",
       });
-    }
+    },
   });
+
   const handleEdit = () => {
     setIsEditing(true);
   };
+
   const handleSave = () => {
     if (!formData.name.trim()) {
       toast({
         title: "Name required",
         description: "Please enter your full name before saving.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
+
     updateProfileMutation.mutate({
       name: formData.name,
-      phone: formData.phone
+      phone: formData.phone,
     });
   };
+
   const handleCancel = () => {
     // Reset to latest server data
     if (userData) {
       setFormData({
         name: userData.name || "",
         email: userData.email || "",
-        phone: userData.phone || ""
+        phone: userData.phone || "",
       });
     }
     setIsEditing(false);
   };
+
   const getInitials = (name?: string) => {
     if (!name) return "U";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>;
-  }
-  return <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="flex h-screen pt-14">
-        {/* Sidebar - Fixed */}
-        <ProfileSidebar activeSection={activeSection} />
 
-      {/* Main Content with smooth scrolling */}
-      <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth">
-        <div className="max-w-5xl mx-auto px-4 py-6 space-y-8">
-          {/* Home Section */}
-          <section id="home" className="py-4 space-y-4">
-            {/* Header Section */}
-            <div className="text-center space-y-3">
-              <Avatar className="h-20 w-20 mx-auto border-4 border-primary/20">
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="border-b bg-card/60 backdrop-blur">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                // If no history, navigate to appropriate default page based on user type
+                if (userType === 'appmaster_admin') {
+                  navigate('/super-admin');
+                } else {
+                  navigate('/');
+                }
+              }
+            }}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-lg font-semibold leading-tight">Profile</h1>
+            <p className="text-xs text-muted-foreground">Manage your account information and security.</p>
+          </div>
+          {(isFetching || updateProfileMutation.isPending) && (
+            <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Saving changes…
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="flex-1">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+          {/* Profile Info */}
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold tracking-tight text-muted-foreground">PROFILE INFO</h2>
+
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <Avatar className="h-16 w-16">
                 <AvatarImage src={profile?.avatar_url || ""} />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-3xl font-bold">
+                <AvatarFallback className="bg-primary/10 text-lg">
                   {getInitials(userData?.name)}
                 </AvatarFallback>
               </Avatar>
-              
-              <div>
-                <h1 className="text-2xl font-normal text-foreground">
-                  Welcome, {formData.name || "User"}
-                </h1>
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-sm font-medium truncate">{formData.name || "User"}</p>
+                <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                  <Mail className="w-3 h-3" /> {formData.email || user?.email}
+                </p>
+              </div>
+              <div className="flex gap-2 md:ml-auto">
+                {isEditing ? (
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={updateProfileMutation.isPending}
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                          Saving…
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-3.5 h-3.5 mr-2" />
+                          Save
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCancel}
+                      disabled={updateProfileMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={handleEdit}>
+                    Edit Profile
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Profile & Personalization Card */}
-              <ProfileCard title="Profile & personalization" description="See your profile data and manage your account information" icon={<div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                    <Settings className="h-8 w-8 text-white" />
-                  </div>} actionLabel="Manage your profile info" onAction={() => {
-                  const element = document.getElementById("personal-info");
-                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }} />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1">
+                <Label htmlFor="name" className="text-xs flex items-center gap-1.5">
+                  <User className="w-3 h-3" /> Full Name
+                </Label>
+                {isEditing ? (
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="h-8 text-sm"
+                    placeholder="Enter your full name"
+                  />
+                ) : (
+                  <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center">
+                    {formData.name || "-"}
+                  </div>
+                )}
+              </div>
 
-              {/* Security Tips Card */}
-              <ProfileCard title="You have security recommendations" description="Security issues found in your Security Checkup" icon={<div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="h-8 w-8 text-white" />
-                  </div>} actionLabel="Review security tips" onAction={() => {
-                  const element = document.getElementById("security");
-                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }} />
-
-              {/* Account Information Card */}
-              <ProfileCard title="Account information" description="View and manage your account details and preferences" icon={<div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                    <AlertCircle className="h-8 w-8 text-white" />
-                  </div>}>
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Email</span>
-                    <span className="font-medium">{formData.email || user?.email}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Role</span>
-                    <span className="font-medium capitalize">{userData?.role || "Member"}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-muted-foreground">Status</span>
-                    <span className="font-medium text-green-600">
-                      {userData?.status || "Active"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-muted-foreground">Member Since</span>
-                    <span className="font-medium">
-                      {userData?.created_at ? format(new Date(userData.created_at), "MMM dd, yyyy") : "-"}
-                    </span>
-                  </div>
+              <div className="space-y-1">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <Mail className="w-3 h-3" /> Email
+                </Label>
+                <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center text-muted-foreground">
+                  {formData.email || user?.email}
                 </div>
-              </ProfileCard>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Email cannot be changed.</p>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="phone" className="text-xs flex items-center gap-1.5">
+                  <Phone className="w-3 h-3" /> Phone Number
+                </Label>
+                {isEditing ? (
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="h-8 text-sm"
+                    placeholder="Enter your phone number"
+                  />
+                ) : (
+                  <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center">
+                    {formData.phone || "-"}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
 
-          {/* Personal Info Section */}
-          <section id="personal-info" className="py-4">
-            <PersonalInfo />
+          <Separator />
+
+          {/* Account / Org Settings */}
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold tracking-tight text-muted-foreground">ACCOUNT SETTINGS</h2>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <Shield className="w-3 h-3" /> Role
+                </Label>
+                <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center capitalize">
+                  {userData?.role || "member"}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <Shield className="w-3 h-3 rotate-90" /> Status
+                </Label>
+                <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center capitalize">
+                  {userData?.status || "active"}
+                </div>
+              </div>
+
+              {!isAppmasterAdmin && (
+                <div className="space-y-1">
+                  <Label className="text-xs flex items-center gap-1.5">
+                    <Building2 className="w-3 h-3" /> Organization
+                  </Label>
+                  <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center truncate">
+                    {organisation?.name || "-"}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <Calendar className="w-3 h-3" /> Member Since
+                </Label>
+                <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center">
+                  {userData?.created_at
+                    ? format(new Date(userData.created_at), "MMM dd, yyyy")
+                    : "-"}
+                </div>
+              </div>
+            </div>
           </section>
 
-          {/* Security Section */}
-          <section id="security" className="py-4">
-            <Security />
-          </section>
+          <Separator />
 
-          {/* Payments Section */}
-          <section id="payments" className="py-4">
-            <Payments />
+          {/* Security */}
+          <section className="space-y-4 pb-4">
+            <h2 className="text-sm font-semibold tracking-tight text-muted-foreground">SECURITY</h2>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1">
+                <Label className="text-xs flex items-center gap-1.5">
+                  <LockKeyhole className="w-3 h-3" /> Password
+                </Label>
+                <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center justify-between">
+                  <span>********</span>
+                  <span className="text-[11px] text-muted-foreground">Managed by authentication</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Multi-factor Authentication</Label>
+                <div className="h-8 px-3 rounded-md bg-muted text-sm flex items-center justify-between">
+                  <span>Coming soon</span>
+                  <span className="text-[11px] text-muted-foreground">Not configurable here</span>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </main>
-      </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Profile;

@@ -10,15 +10,11 @@ interface StatCardProps {
     positive: boolean;
   };
   description?: string;
-  onClick?: () => void;
 }
 
-export const StatCard = ({ title, value, icon: Icon, trend, description, onClick }: StatCardProps) => {
+export const StatCard = ({ title, value, icon: Icon, trend, description }: StatCardProps) => {
   return (
-    <Card 
-      className={`p-6 hover:shadow-lg transition-all ${onClick ? 'cursor-pointer hover:scale-[1.02]' : ''}`}
-      onClick={onClick}
-    >
+    <Card className="p-6 hover:shadow-lg transition-shadow">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm font-medium text-muted-foreground mb-1">{title}</p>
@@ -27,7 +23,7 @@ export const StatCard = ({ title, value, icon: Icon, trend, description, onClick
             <p className="text-sm text-muted-foreground">{description}</p>
           )}
           {trend && (
-            <div className={`text-sm font-medium mt-1 ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-sm font-medium ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.positive ? '↑' : '↓'} {trend.value}
             </div>
           )}
